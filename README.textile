@@ -32,6 +32,7 @@ What do you get if you point this thing at a VPS? All kinds of good stuff!
 * "SMTP":https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol over SSL via Postfix, including a nice set of "DNSBLs":https://en.wikipedia.org/wiki/DNSBL to discard spam before it ever hits your filters.
 * Webmail via "Roundcube":http://www.roundcube.net/.
 * Mobile push notifications via "Z-Push":http://z-push.sourceforge.net/soswp/index.php?pages_id=1&t=home.
+* Email client "automatic configuration":https://developer.mozilla.org/en-US/docs/Mozilla/Thunderbird/Autoconfiguration.
 * Jabber/"XMPP":http://xmpp.org/ instant messaging via "Prosody":http://prosody.im/.
 * An RSS Reader via "Selfoss":http://selfoss.aditu.de/.
 * Virtual domains for your email, backed by "PostgreSQL":http://www.postgresql.org/.
@@ -80,10 +81,9 @@ Purchase a wildcard cert from a certificate authority, such as "Positive SSL":ht
 
 Download your certificate authority's combined cert to @roles/common/files/wildcard_ca.pem@. You can also download the intermediate and root certificates separately and concatenate them together in that order.
 
-Lastly, test your certificates using the @security@ program on Mac OS X:
+Lastly, test your certificate:
 
-bc. security verify-cert -L -p ssl -s example.com -c roles/common/files/wildcard_public_cert.crt -c roles/common/files/wildcard_ca.pem
-...certificate verification successful.
+bc. openssl verify -verbose -CAfile roles/common/files/wildcard_ca.pem roles/common/files/wildcard_public_cert.crt
 
 h4. Self-signed SSL certificate
 
@@ -140,9 +140,13 @@ Retype new password: foo
 
 Remove @{SHA512-CRYPT}@ and insert the rest as the @password_hash@ value.
 
-Alternatively, if you don't already have @doveadm@ installed, Python 3.3 or higher will generate the appropriate string for you on Unix-based platforms (assuming your password is @password@):
+Alternatively, if you don't already have @doveadm@ installed, Python 3.3 or higher on Linux will generate the appropriate string for you (assuming your password is @password@):
 
 bc. python3 -c 'import crypt; print(crypt.crypt("password", salt=crypt.METHOD_SHA512))'
+
+On OS X and other platforms the "passlib":https://pythonhosted.org/passlib/ package may be used to generate the required string:
+
+bc. python -c 'import passlib.hash; print(passlib.hash.sha512_crypt.encrypt("password", rounds=5000))'
 
 Same for the IRC password hash...
 
@@ -161,9 +165,13 @@ bc. # znc --makepass
 
 Take the strings after @Hash =@ and @Salt =@ and insert them as the value for @irc_password_hash@ and @irc_password_salt@ respectively.
 
-Alternatively, if you don't already have @znc@ installed, Python 3.3 or higher will generate the appropriate string for you on Unix-based platforms (assuming your password is @password@):
+Alternatively, if you don't already have @znc@ installed, Python 3.3 or higher on Linux will generate the appropriate string for you (assuming your password is @password@):
 
-bc. python3 -c 'import crypt; print("irc_password_salt: \"{}\"\nirc_password_hash: \"{}\"".format(*crypt.crypt("password", salt=crypt.METHOD_SHA256).split("$")[2:]))'
+bc. python3 -c 'import crypt; print("irc_password_salt: {}\nirc_password_hash: {}".format(*crypt.crypt("password", salt=crypt.METHOD_SHA256).split("$")[2:]))'
+
+On OS X and other platforms the passlib:https://pythonhosted.org/passlib/ package may be used to generate the required string:
+
+bc. python -c 'import passlib.hash; print("irc_password_salt: {}\nirc_password_hash: {}".format(*passlib.hash.sha256_crypt.encrypt("password", rounds=5000).split("$")[2:]))'
 
 For git hosting, copy your public key into place. @cp ~/.ssh/id_rsa.pub roles/git/files/gitolite.pub@ or similar.
 
@@ -191,6 +199,7 @@ If you've just bought a new domain name, point it at "Linode's DNS Manager":http
 Create an @A@ records which point to your server IP for:
  * @example.com@
  * @mail.example.com@
+ * @autoconfig.example.com@ (for email client automatic configuration)
  * @read.example.com@ (for wallabe)
  * @news.example.com@ (for selfoss)
  * @cloud.example.com@ (for owncloud)

@@ -2,8 +2,8 @@
   apt: pkg={{ item }} state=latest
   with_items:
     - roundcube
-    - roundcube-plugins
     - roundcube-pgsql
+    - roundcube-plugins
 
 - name: Configure Roundcube database
   template: src={{ item.src }} dest={{ item.dest }} group={{ item.group }} mode={{ item.mode }} owner=root force=yes
@@ -24,7 +24,9 @@
   command: mv rcmcarddav-carddav_{{ carddav_version }} /usr/share/roundcube/plugins/carddav chdir=/root creates=/usr/share/roundcube/plugins/carddav
 
 - name: Download Google Authenticator roundcube plugin
-  git: repo=https://github.com/alexandregz/twofactor_gauthenticator.git dest=/usr/share/roundcube/plugins/twofactor_gauthenticator
+  git: repo=https://github.com/alexandregz/twofactor_gauthenticator.git
+       dest=/usr/share/roundcube/plugins/twofactor_gauthenticator
+       accept_hostkey=yes
 
 - name: Link plugins into /var/lib/roundcube/plugins
   file: state=link src=/usr/share/roundcube/plugins/{{ item }} dest=/var/lib/roundcube/plugins/{{ item }} force=yes
@@ -44,13 +46,12 @@
 - name: Configure roundcube
   copy: src={{ item.src }} dest={{ item.dest }} group=www-data owner=root mode=640 force=yes
   with_items:
-  - { src: 'etc_roundcube_main.inc.php',                                          dest: '/etc/roundcube/main.inc.php' }
-  - { src: 'usr_share_roundcube_plugins_managesieve_config.inc.php',              dest: '/usr/share/roundcube/plugins/managesieve/config.inc.php' }
-  - { src: 'usr_share_roundcube_plugins_carddav_config.inc.php',                  dest: '/usr/share/roundcube/plugins/carddav/config.inc.php' }
-  - { src: 'usr_share_roundcube_plugins_twofactor_gauthenticator_config.inc.php', dest: '/usr/share/roundcube/plugins/twofactor_gauthenticator/config.inc.php' }
   - { src: 'etc_roundcube_global.sieve',                                          dest: '/etc/roundcube/global.sieve' }
+  - { src: 'etc_roundcube_main.inc.php',                                          dest: '/etc/roundcube/main.inc.php' }
+  - { src: 'usr_share_roundcube_plugins_carddav_config.inc.php',                  dest: '/usr/share/roundcube/plugins/carddav/config.inc.php' }
+  - { src: 'usr_share_roundcube_plugins_managesieve_config.inc.php',              dest: '/usr/share/roundcube/plugins/managesieve/config.inc.php' }
+  - { src: 'usr_share_roundcube_plugins_twofactor_gauthenticator_config.inc.php', dest: '/usr/share/roundcube/plugins/twofactor_gauthenticator/config.inc.php' }
 
 - name: Enable roundcube site
   command: a2ensite roundcube.conf creates=/etc/apache2/sites-enabled/roundcube.conf
   notify: restart apache
-

@@ -3,11 +3,11 @@
   with_items:
     - dovecot-core
     - dovecot-imapd
-    - dovecot-pop3d
     - dovecot-lmtpd
     - dovecot-managesieved
-    - postgresql-9.1
     - dovecot-pgsql
+    - dovecot-pop3d
+    - postgresql-9.1
   when: ansible_distribution_release != 'trusty'
 
 - name: Install Dovecot and related packages for Ubuntu trusty
@@ -15,18 +15,18 @@
   with_items:
     - dovecot-core
     - dovecot-imapd
-    - dovecot-pop3d
     - dovecot-lmtpd
     - dovecot-managesieved
-    - postgresql-9.3
     - dovecot-pgsql
+    - dovecot-pop3d
+    - postgresql-9.3
   when: ansible_distribution_release == 'trusty'
 
 - name: Create vmail group
   group: name=vmail state=present gid=5000
 
 - name: Create vmail user
-  user: name=vmail group=vmail state=present uid=5000 home=/decrypted
+  user: name=vmail group=vmail state=present uid=5000 home=/decrypted shell=/usr/sbin/nologin
 
 - name: Ensure mail domain directories are in place
   file: state=directory path=/decrypted/{{ item.name }} owner=vmail group=dovecot mode=770
@@ -42,11 +42,11 @@
 - name: Copy additional Dovecot configuration files in place
   copy: src=etc_dovecot_conf.d_{{ item }} dest=/etc/dovecot/conf.d/{{ item }}
   with_items:
-    - 10-mail.conf
     - 10-auth.conf
-    - auth-sql.conf.ext
+    - 10-mail.conf
     - 10-master.conf
     - 10-ssl.conf
+    - auth-sql.conf.ext
   notify: restart dovecot
 
 - name: Template 15-lda.conf
@@ -65,5 +65,5 @@
 - name: Set firewall rules for dovecot
   ufw: rule=allow port={{ item }} proto=tcp
   with_items:
-    - pop3s
     - imaps
+    - pop3s
