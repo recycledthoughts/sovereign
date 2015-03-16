@@ -1,5 +1,8 @@
 ---
 # Defines tasks applicable across all machines in the infrastructure.
+- name: Set up closest mirror autoselect (ubuntu-only)
+  template: src=apt_sources.list.j2 dest=/etc/apt/sources.list
+  when: ansible_distribution == 'Ubuntu'
 
 - name: Update apt cache
   apt: update_cache=yes
@@ -27,6 +30,16 @@
     - update-notifier-common
     - vim
     - zsh
+
+- name: Set timezone to UTC
+  action: shell echo Etc/UTC > /etc/timezone
+
+- name: Set localtime to UTC
+  file: src=/usr/share/zoneinfo/Etc/UTC dest=/etc/localtime
+
+- name: Reconfigure tzdata
+  action: command dpkg-reconfigure -f noninteractive tzdata
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
 
 - name: Install unattended upgrades (Debian/Ubuntu only)
   apt: pkg=unattended-upgrades state=installed
@@ -56,6 +69,12 @@
   command: a2enconf fqdn creates=/etc/apache2/conf-enabled/fqdn.conf
   notify: restart apache
   when: ansible_distribution_release == 'trusty'
+
+- name: Create decrypted directory (even if encfs isn't used)
+  file: state=directory path=/decrypted
+
+- name: Set decrypted directory permissions
+  file: state=directory path=/decrypted group=mail mode=775
 
 - include: encfs.yml tags=encfs
 - include: users.yml tags=users
